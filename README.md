@@ -1,4 +1,4 @@
-# Harvard_TinyMLx Arduino Library
+# Based on the Harvard_TinyMLx Arduino Library
 
 Source code and examples for using and testing your Tiny Machine Learning Kit and Shield.
 
