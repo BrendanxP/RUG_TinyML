@@ -14,29 +14,59 @@ import java.nio.ByteOrder;
 
 Serial myPort;
 
-// must match resolution used in the sketch
-final int cameraWidth = 176;
-final int cameraHeight = 144;
+// Define the desired resolution and serial connection
+final String resolution = "QCIF";  // Choose from VGA, CIF, QVGA, QCIF, or QQVGA
+final String com_port = ""; // Leave blank if only one serial COM port is active, otherwise specify "COM4"
+
+int cameraWidth;
+int cameraHeight;
 
 final int cameraBytesPerPixel = 2;
 
-final int bytesPerFrame = cameraWidth * cameraHeight * cameraBytesPerPixel;
+int bytesPerFrame;
 
 PImage myImage;
 
 void setup()
 {
-  size(176, 144);
+  size(640,480); // Need to make window first, resize later
+  if (resolution.equals("VGA")) {
+    cameraWidth = 640;
+    cameraHeight = 480;
+  } else if (resolution.equals("CIF")) {
+    cameraWidth = 352;
+    cameraHeight = 240;
+  } else if (resolution.equals("QVGA")) {
+    cameraWidth = 320;
+    cameraHeight = 240;
+  } else if (resolution.equals("QCIF")) {
+    cameraWidth = 176;
+    cameraHeight = 144;
+  } else if (resolution.equals("QQVGA")) {
+    cameraWidth = 160;
+    cameraHeight = 120;
+  } else {
+    // Default to QVGA if an invalid resolution is provided
+    cameraWidth = 320;
+    cameraHeight = 240;
+  }
 
-  // if you have only ONE serial port active
-  //myPort = new Serial(this, Serial.list()[0], 9600); // if you have only ONE serial port active
+  windowResize(cameraWidth, cameraHeight);
 
-  // if you know the serial port name
-  myPort = new Serial(this, "COM3", 9600);                    // Windows
-  //myPort = new Serial(this, "/dev/ttyACM0", 9600);             // Linux
-  //myPort = new Serial(this, "/dev/cu.usbmodem14101", 9600);  // Mac
 
+  if (com_port.equals("")) {
+    // Pick the only/first serial COM port active.
+    myPort = new Serial(this, Serial.list()[0], 9600);
+  } else {
+    // Specify the serial COM port.
+    myPort = new Serial(this, com_port, 9600);                     // Windows
+    //myPort = new Serial(this, "/dev/ttyACM0", 9600);             // Linux
+    //myPort = new Serial(this, "/dev/cu.usbmodem14101", 9600);    // Mac
+  }
+
+  
   // wait for full frame of bytes
+  bytesPerFrame = cameraWidth * cameraHeight * cameraBytesPerPixel;
   myPort.buffer(bytesPerFrame);  
 
   myImage = createImage(cameraWidth, cameraHeight, RGB);
