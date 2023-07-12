@@ -1,4 +1,10 @@
-# Based on the Harvard_TinyMLx Arduino Library
+# Supplementary material for the RUG TinyML course
+
+This course uses tiny machine learning on the Arduino Nano BLE, which requires several driver packages to function properly. This repository is a modified version from the Harvard EDX TinyML courses, namely; *Fundamentals of TinyML*, *Applications of TinyML* and *Deploying TinyML*.
+
+# Below is the README file from the original GitHub repository:
+
+## Based on the Harvard_TinyMLx Arduino Library
 
 Source code and examples for using and testing your Tiny Machine Learning Kit and Shield.
 
