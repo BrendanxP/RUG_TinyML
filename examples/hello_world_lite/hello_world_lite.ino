@@ -20,23 +20,22 @@
  * limitations under the License.
  */
 
-// Import TensorFlow stuff
+// Import TensorFlow
 #include "TensorFlowLite.h"
 #include "tensorflow/lite/micro/kernels/micro_ops.h"
-#include "tensorflow/lite/micro/tflite_bridge/micro_error_reporter.h"
+#include "tensorflow/lite/micro/micro_error_reporter.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
-// #include "tensorflow/lite/version.h"
+#include "tensorflow/lite/version.h"
 
-// Our model
+// Our model hello world sin model
 #include "sine_model.h"
 
-// Figure out what's going on in our model
-#define DEBUG 1
+// Choose to spam the console (0 or 1)
+#define DEBUG_PRINT 0
 
-// Some settings
-constexpr int led_pin = 2;
-constexpr float pi = 3.14159265;                  // Some pi
+// Global variable settings
+constexpr float pi = 3.1415926535897932384626433; // Enjoy some pi or assume pi=e=3
 constexpr float freq = 0.5;                       // Frequency (Hz) of sinewave
 constexpr float period = (1 / freq) * (1000000);  // Period (microseconds)
 
@@ -48,22 +47,17 @@ namespace {
   TfLiteTensor* model_input = nullptr;
   TfLiteTensor* model_output = nullptr;
 
-  // Create an area of memory to use for input, output, and other TensorFlow
-  // arrays. You'll need to adjust this by combiling, running, and looking
-  // for errors.
+  // Create an area of memory to use for input, output, and other TensorFlow arrays.
   constexpr int kTensorArenaSize = 5 * 1024;
   uint8_t tensor_arena[kTensorArenaSize];
-} // namespace
+}
 
 void setup() {
 
-  // Wait for Serial to connect
-#if DEBUG
-  while(!Serial);
-#endif
-
-  // Let's make an LED vary in brightness
-  pinMode(led_pin, OUTPUT);
+  // Wait for Serial to connect if we want to print the output
+  #if DEBUG_PRINT
+    while(!Serial);
+  #endif
 
   // Set up logging (will report to Serial, even within TFLite functions)
   static tflite::MicroErrorReporter micro_error_reporter;
@@ -77,65 +71,56 @@ void setup() {
   }
 
   // Pull in only needed operations (should match NN layers)
-  // Available ops:
-  //  https://github.com/tensorflow/tensorflow/blob/master/tensorflow/lite/micro/kernels/micro_ops.h
-  //static tflite::MicroMutableOpResolver micro_mutable_op_resolver;
   static tflite::MicroMutableOpResolver<8> micro_mutable_op_resolver;
-  // micro_mutable_op_resolver.AddBuiltin(
-  //   tflite::BuiltinOperator_FULLY_CONNECTED,
-  //   //tflite::ops::micro::Register_FULLY_CONNECTED(),
-  //   tflite::ops::builtin::Register_FULLY_CONNECTED(),
-  //   1, 3);
-
   micro_mutable_op_resolver.AddFullyConnected();
-
-
-
 
   // Build an interpreter to run the model
   static tflite::MicroInterpreter static_interpreter(
-    model, micro_mutable_op_resolver, tensor_arena, kTensorArenaSize); //, error_reporter removed
+    model, micro_mutable_op_resolver, tensor_arena, kTensorArenaSize, error_reporter);
   interpreter = &static_interpreter;
 
   // Allocate memory from the tensor_arena for the model's tensors
   TfLiteStatus allocate_status = interpreter->AllocateTensors();
   if (allocate_status != kTfLiteOk) {
     error_reporter->Report("AllocateTensors() failed");
-    while(1);
+    while(1) {
+      //wait until arduino is reset.
+    }
   }
 
   // Assign model input and output buffers (tensors) to pointers
   model_input = interpreter->input(0);
   model_output = interpreter->output(0);
 
-  // Get information about the memory area to use for the model's input
-  // Supported data types:
-  // https://github.com/tensorflow/tensorflow/blob/master/tensorflow/lite/c/common.h#L226
-#if DEBUG
-  Serial.print("Number of dimensions: ");
-  Serial.println(model_input->dims->size);
-  Serial.print("Dim 1 size: ");
-  Serial.println(model_input->dims->data[0]);
-  Serial.print("Dim 2 size: ");
-  Serial.println(model_input->dims->data[1]);
-  Serial.print("Input type: ");
-  Serial.println(model_input->type);
-#endif
+  // Initialize digital pin LED_BUILTIN as an output.
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  // Print info
+  #if DEBUG_PRINT
+    Serial.print("Number of dimensions: ");
+    Serial.println(model_input->dims->size);
+    Serial.print("Dim 1 size: ");
+    Serial.println(model_input->dims->data[0]);
+    Serial.print("Dim 2 size: ");
+    Serial.println(model_input->dims->data[1]);
+    Serial.print("Input type: ");
+    Serial.println(model_input->type);
+  #endif
 }
 
 void loop() {
 
+  #if DEBUG_PRINT
+    unsigned long start_timestamp = micros();
+  #endif
 
-#if DEBUG
-  unsigned long start_timestamp = micros();
-#endif
-
-  // Get current timestamp and modulo with period
+  // Get current time since last completed period
   unsigned long timestamp = micros();
   timestamp = timestamp % (unsigned long)period;
 
   // Calculate x value to feed to the model
-  float x_val = ((float)timestamp * 2 * pi) / period;
+  // x goes from 0 to 2 pi based on the time and period duration
+  float x_val = (((float)timestamp / period) * 2 * pi) ;
 
   // Copy value to input buffer (tensor)
   model_input->data.f[0] = x_val;
@@ -147,21 +132,23 @@ void loop() {
   }
 
   // Read predicted y value from output buffer (tensor)
+  // sin wave will result between -1 and 1
   float y_val = model_output->data.f[0];
 
-  // Translate to a PWM LED brightness
-  int brightness = (int)(255 * y_val);
-  analogWrite(led_pin, brightness);
+  // Translate y range [-1, 1] to [0, 1] 
+  // Multiply with 255 to get brightness range of [0, 255]
+  int brightness = (int)(255 * ((y_val + 1) / 2));
+  analogWrite(LED_BUILTIN, brightness);
 
-  // Print value
+  // Print value and print additional boundary values for nicer plot
   Serial.print(-1.5);
   Serial.print("\t");
   Serial.print(1.5);
   Serial.print("\t");
   Serial.println(y_val);
 
-#if DEBUG
-  Serial.print("Time for inference (us): ");
-  Serial.println(micros() - start_timestamp);
-#endif
+  #if DEBUG_PRINT
+    Serial.print("Time for inference (us): ");
+    Serial.println(micros() - start_timestamp);
+  #endif
 }
