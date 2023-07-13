@@ -1,16 +1,15 @@
 /*
-  Active Learning Labs
-  Harvard University 
-  tinyMLx - Sensor Test
-
-  Requires the Arduino_LSM9DS1 library library
-*/
+ * Original Authors: Harvard University tinyMLx
+ * Modified by: Alex Sloot, Brendan Dijkstra, RUG
+ * Date: July 13 2023
+ */
 
 #include <Arduino_LSM9DS1.h>
 
-int imuIndex = 0; // 0 - accelerometer, 1 - gyroscope, 2 - magnetometer
+int imuIndex = 0;         // 0 - accelerometer, 1 - gyroscope, 2 - magnetometer
 bool commandRecv = false; // flag used for indicating receipt of commands from serial port
-bool startStream = false;
+bool startStream = false; // flag used to start printing
+
 
 void setup() {
   Serial.begin(9600);
@@ -22,8 +21,8 @@ void setup() {
     while (1);
   }
 
-  Serial.println("Welcome to the IMU test for the built-in IMU on the Nano 33 BLE Sense\n");
-  Serial.println("Available commands:");
+  // Print selection menu
+  Serial.println("Available IMU commands:");
   Serial.println("a - display accelerometer readings in g's in x, y, and z directions");
   Serial.println("g - display gyroscope readings in deg/s in x, y, and z directions");
   Serial.println("m - display magnetometer readings in uT in x, y, and z directions");
@@ -49,28 +48,25 @@ void loop() {
     commandRecv = false;
     if (command == "a") {
       imuIndex = 0;
-      if (!startStream) {
-        startStream = true;
-      } 
+      startStream = true;
       delay(3000);
-    }
-    else if (command == "g") {
+    } else if (command == "g") {
       imuIndex = 1;
-      if (!startStream) {
-        startStream = true;
-      }
+      startStream = true;
       delay(3000);
-    }
-    else if (command == "m") {
+    } else if (command == "m") {
       imuIndex = 2;
-      if (!startStream) {
-        startStream = true;
-      }
+      startStream = true;
       delay(3000);
+    } else {
+      startStream = false;
+      Serial.println("Invalid input, stopping measurements");
+      Serial.println("Choose a, g or x")
     }
+
   }
 
-
+  // Get and print the sensor data
   float x, y, z;
   if (startStream) {
     if (imuIndex == 0) { // testing accelerometer
