@@ -6,7 +6,7 @@
  * Date: March 11, 2020
  * 
  * Modified by: Alex Sloot, Brendan Dijkstra
- * Date: July 13th, 2023
+ * Date: July 13, 2023
  *
  * Copyright 2019 The TensorFlow Authors. All Rights Reserved.
  *
