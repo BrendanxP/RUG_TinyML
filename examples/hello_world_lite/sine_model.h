@@ -1,7 +1,7 @@
 #ifndef SINE_MODEL_H
 #define SINE_MODEL_H
 
-
+// A C++ header file of a TensorFlow model for approximating a sine wave
 unsigned int sine_model_len = 3168;
 unsigned char sine_model[] = {
  0x1c, 0x00, 0x00, 0x00, 0x54, 0x46, 0x4c, 0x33, 0x14, 0x00, 0x20, 0x00,
