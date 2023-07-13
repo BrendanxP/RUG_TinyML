@@ -1,7 +1,7 @@
 /*
  * Original Authors: Harvard University tinyMLx
  * Modified by: Alex Sloot, Brendan Dijkstra, RUG
- * Date: July 13 2023
+ * Date: July 13, 2023
  */
 
 #include <Arduino_LSM9DS1.h>
