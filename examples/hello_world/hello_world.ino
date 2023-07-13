@@ -1,3 +1,9 @@
+/*
+ * Original Authors: https://arduinogetstarted.com/
+ * Modified by: Alex Sloot, Brendan Dijkstra
+ * Date: July 13, 2023
+ */ 
+
 void setup() {
   // Initialize baud rate to the default value
   Serial.begin(9600); 
