@@ -12,6 +12,9 @@ import processing.serial.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Locale;
 
 import java.util.concurrent.TimeUnit;
 
@@ -81,50 +84,53 @@ void draw()
 }
 
 void serialEvent(Serial myPort) {
-  
   System.out.println("Start image");
-  
+
   byte[] frameBuffer = new byte[bytesPerFrame];
 
-  // read the saw bytes in
+  // read the raw bytes
   myPort.readBytes(frameBuffer);
-  
-  System.out.println("Size: " + Arrays.toString(frameBuffer).length());
-  System.out.println(Arrays.toString(frameBuffer));
-  
+
   // create image to set byte values
   PImage img = createImage(cameraWidth, cameraHeight, RGB);
 
   // access raw bytes via byte buffer
   ByteBuffer bb = ByteBuffer.wrap(frameBuffer);
   bb.order(ByteOrder.BIG_ENDIAN);
-  
-  System.out.println(bb);
+
+  StringBuilder sb = new StringBuilder();
 
   int i = 0;
-
-  img.loadPixels();
   while (bb.hasRemaining()) {
     // read 16-bit pixel
     short p = bb.getShort();
 
-    // convert RGB565 to RGB 24-bit
-    int r = ((p >> 11) & 0x1f) << 3;
-    int g = ((p >> 5) & 0x3f) << 2;
-    int b = ((p >> 0) & 0x1f) << 3;
-    
-    //System.out.println("r: " + r);
-    //System.out.println("g: " + g);
-    //System.out.println("b: " + b);
-    //System.out.println(color(r, g, b));
+    // convert to formatted string
+    String formattedValue = String.format(Locale.US, "0x%04X", p);
+
+    // append to StringBuilder
+    sb.append(formattedValue).append(", ");
 
     // set pixel color
+    int r = ((p >> 11) & 0x1F) << 3;
+    int g = ((p >> 5) & 0x3F) << 2;
+    int b = ((p >> 0) & 0x1F) << 3;
     img.pixels[i++] = color(r, g, b);
   }
   img.updatePixels();
 
   // assign image for next draw
   myImage = img;
-  
+
+  // Write formatted data to a text file
+  //try {
+  //  FileWriter writer = new FileWriter("frameBuffer.txt");
+  //  writer.write(sb.toString());
+  //  writer.close();
+  //  System.out.println("frameBuffer.txt created.");
+  //} catch (IOException e) {
+  //  System.out.println("Error writing to file: " + e.getMessage());
+  //}
+
   System.out.println("End image");
 }
